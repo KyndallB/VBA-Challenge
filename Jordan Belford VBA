@@ -1,0 +1,181 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "ThisWorkbook"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = True
+Sub Jordan_Belford()
+
+'Make loopies through all the worksheets:
+Dim sheet As Worksheet
+For Each sheet In Worksheets
+     sheet.Cells(1, 9).Value = "Ticker"
+     sheet.Cells(1, 10).Value = "Yearly Change"
+     sheet.Cells(1, 11).Value = "Percent Change"
+     sheet.Cells(1, 12).Value = "Total Stock Volume"
+
+
+'Define every variable.'
+    'Create a variable to produce/hold the ticker symbol:'
+    Dim ticker_symbol As String
+    
+    'Create variables to hold "new" data:'
+        Dim opened As Double
+        opened = 0
+        Dim closed As Double
+        closed = 0
+        Dim volume_total As Double
+        volume_total = 0
+        Dim change_in_year As Double
+        change_in_year = 0
+        Dim change_in_percent As Double
+        change_in_percent = 0
+        
+    'Tracker of location for each ticker symbol:'
+    '****This was referenced from StackExchange; code was failing without it.'
+    Dim rowcount As Long
+    rowcount = 2
+    
+    'Create variable for rows to loop through:
+    Dim lastrow As Long
+    lastrow = sheet.Cells(Rows.Count, 1).End(xlUp).Row
+    
+    
+    'Loop to discover ticker symbols:
+    For i = 2 To lastrow
+        'Grab open year price:'
+        If sheet.Cells(i, 1).Value <> sheet.Cells(i - 1, 1).Value Then
+                opened = sheet.Cells(i, 3).Value
+        End If
+        
+        'Sum the volume for each row to determine the total volume:
+        volume_total = volume_total + sheet.Cells(i, 7)
+        
+        'Determine if the ticker symbol is changing:
+            If sheet.Cells(i, 1).Value <> sheet.Cells(i + 1, 1).Value Then
+                
+                'Move ticker symbol to summary table:
+                sheet.Cells(rowcount, 9).Value = sheet.Cells(i, 1).Value
+
+                'Move total volume to table:
+                sheet.Cells(rowcount, 12).Value = volume_total
+
+                'Grab year end price:
+                closed = sheet.Cells(i, 6).Value
+                
+                'Calculate year price change and move to table:
+                change_in_year = closed - opened
+                sheet.Cells(rowcount, 10).Value = c
+           
+          'Highlight positive or negative change:
+                If change_in_year >= 0 Then
+                    sheet.Cells(rowcount, 10).Interior.ColorIndex = 4
+                Else
+                    sheet.Cells(rowcount, 10).Interior.ColorIndex = 3
+                End If
+   
+            'Calculating percent change:
+                If opened = 0 And closed = 0 Then
+                    'Cannot use a formula because 0/0=0 would leave error.              ***Thank you StackExchange LOL'
+                    change_in_percent = 0
+                    sheet.Cells(rowcount, 11).Value = change_in_percent
+                    sheet.Cells(rowcount, 11).NumberFormat = "0.00%"
+                ElseIf opened = 0 Then
+            
+            Dim no_percent_change As String
+                    no_percent_change = "New Stock"
+                    sheet.Cells(rowcount, 11).Value = change_in_percent
+                Else
+                    change_in_percent = change_in_year / opened
+                    sheet.Cells(rowcount, 11).Value = change_in_percent
+                    sheet.Cells(rowcount, 11).NumberFormat = "0.00%"
+                End If
+
+    'To occupy the next empty row:
+                rowcount = rowcount + 1
+    
+    'Reset variables:
+                volume_total = 0
+                opened = 0
+                closed = 0
+                change_in_year = 0
+                change_in_percent = 0
+                
+            End If
+    
+    Next i
+
+        'Best/Worst performance table:
+        sheet.Cells(2, 15).Value = "Greatest % Increase"
+        sheet.Cells(3, 15).Value = "Greatest % Decrease"
+        sheet.Cells(4, 15).Value = "Greatest Total Volume"
+        sheet.Cells(1, 16).Value = "Ticker"
+        sheet.Cells(1, 17).Value = "Value"
+
+        'Count the number of rows in the summary table:
+        lastrow = sheet.Cells(Rows.Count, 9).End(xlUp).Row
+
+        'Create variables for best performer, worst performer, and stock with greatest volume:
+            Dim best_stock As String
+            Dim greatest_value As Double
+
+        'Set best performer equal to the first stock:
+        greatest_value = sheet.Cells(2, 11).Value
+
+            Dim worst_stock As String
+            Dim best_value As Double
+
+        'Set worst performer equal to the first stock:
+        worst_value = sheet.Cells(2, 11).Value
+
+            Dim greatest_stock As String
+            Dim greatest_vol_value As Double
+
+        'Set most volume equal to the first stock:
+        greatest_vol_value = sheet.Cells(2, 12).Value
+
+        'Search through summary table:
+        For j = 2 To lastrow
+
+            'Determine best performer:
+            If sheet.Cells(j, 11).Value > best_value Then
+                best_value = sheet.Cells(j, 11).Value
+                best_stock = sheet.Cells(j, 9).Value
+            End If
+
+
+            'Determine worst performer:
+            If sheet.Cells(j, 11).Value < worst_value Then
+                worst_value = sheet.Cells(j, 11).Value
+                worst_stock = sheet.Cells(j, 9).Value
+            End If
+
+            'Determine stock with the greatest volume:
+            If sheet.Cells(j, 12).Value > greatest_vol_value Then
+                greatest_vol_value = sheet.Cells(j, 12).Value
+                greatest_stock = sheet.Cells(j, 9).Value
+            End If
+            
+            Next j
+
+        'Place best and worst performer and stock with greatest volume in performance table:
+            sheet.Cells(2, 16).Value = best_stock
+            sheet.Cells(2, 17).Value = best_value
+            sheet.Cells(2, 17).NumberFormat = "0.00%"
+            sheet.Cells(3, 16).Value = worst_stock
+            sheet.Cells(3, 17).Value = worst_value
+            sheet.Cells(3, 17).NumberFormat = "0.00%"
+            sheet.Cells(4, 16).Value = greatest_stock
+            sheet.Cells(4, 17).Value = greatest_vol_value
+
+        'Autofit table columns:
+            sheet.Columns("I:L").EntireColumn.AutoFit
+            sheet.Columns("O:Q").EntireColumn.AutoFit
+
+    Next sheet
+            
+End Sub
+
